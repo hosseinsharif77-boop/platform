@@ -1,0 +1,150 @@
+# Docker Compose Configuration for Live Price Platform
+# Development environment setup with MongoDB and Redis
+# 
+# PORT CONFIGURATION:
+# - Frontend: 3100
+# - Backend: 5100
+# - MongoDB: 27017
+# - Redis: 6379
+# - Mongo Express: 8081
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # MongoDB Database
+  # ===========================================
+  mongodb:
+    image: mongo:7.0
+    container_name: live-price-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-live-price-platform}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - live-price-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===========================================
+  # MongoDB Express (Optional - DB Management UI)
+  # ===========================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: live-price-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASSWORD:-password123}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGODB_USERNAME:-admin}:${MONGODB_PASSWORD:-password123}@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - live-price-network
+
+  # ===========================================
+  # Redis Cache
+  # ===========================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: live-price-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    networks:
+      - live-price-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Backend API Server (Port 5100)
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: live-price-backend
+    restart: unless-stopped
+    ports:
+      - "5100:5100"
+    environment:
+      NODE_ENV: development
+      PORT: 5100
+      MONGODB_URI: mongodb://${MONGODB_USERNAME:-admin}:${MONGODB_PASSWORD:-password123}@mongodb:27017/${MONGODB_DATABASE:-live-price-platform}?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key}
+      CORS_ORIGIN: http://localhost:3100
+    volumes:
+      - ./backend/src:/app/src
+      - /app/node_modules
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - live-price-network
+
+  # ===========================================
+  # Frontend Application (Port 3100)
+  # ===========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: live-price-frontend
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    environment:
+      PORT: 3100
+      NEXT_PUBLIC_API_URL: http://localhost:5100/api
+    volumes:
+      - ./frontend/src:/app/src
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - live-price-network
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  redis_data:
+    driver: local
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  live-price-network:
+    driver: bridge

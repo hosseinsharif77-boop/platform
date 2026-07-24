@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================
+ * CYBERPUNK DESIGN SYSTEM
+ * =========================================== */
+
+@layer base {
+  :root {
+    --background: #060608;
+    --foreground: #F2F2F5;
+    --primary: #00C8FF;
+    --primary-foreground: #060608;
+    --secondary: #111116;
+    --secondary-foreground: #F2F2F5;
+    --muted: #111116;
+    --muted-foreground: #5A5A6E;
+    --accent: #00C8FF;
+    --accent-foreground: #060608;
+    --destructive: #FF4444;
+    --destructive-foreground: #F2F2F5;
+    --border: rgba(255, 255, 255, 0.06);
+    --input: rgba(255, 255, 255, 0.06);
+    --ring: #00C8FF;
+    --radius: 0;
+  }
+
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background: rgba(0, 200, 255, 0.2);
+    color: #F2F2F5;
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 200, 255, 0.4);
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  [dir="rtl"] {
+    text-align: right;
+  }
+}
+
+/* ===========================================
+ * SCROLLBAR
+ * =========================================== */
+::-webkit-scrollbar        { width: 4px; }
+::-webkit-scrollbar-track  { background: #060608; }
+::-webkit-scrollbar-thumb  { background: rgba(0,200,255,0.25); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,200,255,0.5); }
+
+/* ===========================================
+ * ANIMATIONS
+ * =========================================== */
+
+/* Pulsing dot for live/status indicators */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Scan line / shimmer on hover */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Glow button effect */
+.btn-glow:hover {
+  box-shadow: 0 0 40px rgba(0, 200, 255, 0.4);
+}
+
+/* Glow card line on hover */
+.card-glow-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00C8FF, transparent);
+  transform: scaleX(0);
+  transition: transform 0.5s ease;
+}
+.group:hover .card-glow-line {
+  transform: scaleX(1);
+}
+
+/* Fade in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide up */
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Scale in */
+@keyframes scaleIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

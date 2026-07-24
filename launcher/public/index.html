@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Price Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .status-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .status-card.active {
+            border-color: #22c55e;
+            background: rgba(34,197,94,0.1);
+        }
+
+        .status-card.inactive {
+            border-color: #64748b;
+        }
+
+        .status-name {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-dot.on { background: #22c55e; }
+        .status-dot.off { background: #64748b; }
+
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-start { background: #22c55e; color: #fff; }
+        .btn-stop { background: #ef4444; color: #fff; }
+        .btn-restart { background: #f59e0b; color: #fff; }
+        .btn-refresh { background: #6366f1; color: #fff; }
+
+        .btn:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Links */
+        .links {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .link-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 16px;
+            text-decoration: none;
+            color: #fff;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .link-card:hover { background: rgba(255,255,255,0.1); }
+        .link-card.disabled { opacity: 0.4; pointer-events: none; }
+
+        .link-card h4 { font-size: 13px; margin-bottom: 4px; }
+        .link-card p { font-size: 11px; color: #64748b; }
+
+        /* Logs */
+        .logs {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .logs h3 {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .log-entry {
+            font-size: 12px;
+            font-family: monospace;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .log-entry .time { color: #64748b; }
+        .log-entry.success { color: #22c55e; }
+        .log-entry.error { color: #ef4444; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 13px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">LP</div>
+                <span class="logo-text">Live Price Platform</span>
+            </div>
+            <p class="subtitle">Service Control Panel</p>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card" id="status-frontend">
+                <div class="status-name">Frontend</div>
+                <div class="status-value"><span class="status-dot off"></span>Stopped</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px">Port 3100</div>
+            </div>
+            <div class="status-card" id="status-backend">
+                <div class="status-name">Backend</div>
+                <div class="status-value"><span class="status-dot off"></span>Stopped</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px">Port 5100</div>
+            </div>
+            <div class="status-card" id="status-mongodb">
+                <div class="status-name">MongoDB</div>
+                <div class="status-value"><span class="status-dot off"></span>Stopped</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px">Port 27017</div>
+            </div>
+            <div class="status-card" id="status-redis">
+                <div class="status-name">Redis</div>
+                <div class="status-value"><span class="status-dot off"></span>Stopped</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px">Port 6379</div>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn btn-start" onclick="startServices()">Start All</button>
+            <button class="btn btn-stop" onclick="stopServices()">Stop All</button>
+            <button class="btn btn-restart" onclick="restartServices()">Restart</button>
+            <button class="btn btn-refresh" onclick="refreshStatus()">Refresh</button>
+        </div>
+
+        <div class="links">
+            <a href="http://localhost:3100/marketplace" target="_blank" class="link-card disabled" id="link-marketplace">
+                <h4>Marketplace</h4>
+                <p>Browse products</p>
+            </a>
+            <a href="http://localhost:3100/dashboard" target="_blank" class="link-card disabled" id="link-dashboard">
+                <h4>Dashboard</h4>
+                <p>Seller panel</p>
+            </a>
+            <a href="http://localhost:3100/admin" target="_blank" class="link-card disabled" id="link-admin">
+                <h4>Admin</h4>
+                <p>Admin panel</p>
+            </a>
+            <a href="http://localhost:5100/health" target="_blank" class="link-card disabled" id="link-api">
+                <h4>API</h4>
+                <p>Backend health</p>
+            </a>
+        </div>
+
+        <div class="logs">
+            <h3>Logs</h3>
+            <div id="log-list"></div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        async function api(method, endpoint) {
+            try {
+                const res = await fetch(`/api/${endpoint}`, { method });
+                return await res.json();
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        }
+
+        async function refreshStatus() {
+            const res = await api('GET', 'status');
+            if (res.success) updateUI(res.data);
+        }
+
+        async function refreshLogs() {
+            const res = await api('GET', 'logs');
+            if (res.success) {
+                const list = document.getElementById('log-list');
+                list.innerHTML = res.data.map(l => 
+                    `<div class="log-entry ${l.type}"><span class="time">${l.time}</span> ${l.message}</div>`
+                ).join('');
+                list.scrollTop = list.scrollHeight;
+            }
+        }
+
+        function updateUI(s) {
+            updateCard('frontend', s.frontend);
+            updateCard('backend', s.backend);
+            updateCard('mongodb', s.mongodb);
+            updateCard('redis', s.redis);
+
+            document.getElementById('link-marketplace').classList.toggle('disabled', !s.frontend);
+            document.getElementById('link-dashboard').classList.toggle('disabled', !s.frontend);
+            document.getElementById('link-admin').classList.toggle('disabled', !s.frontend);
+            document.getElementById('link-api').classList.toggle('disabled', !s.backend);
+        }
+
+        function updateCard(name, on) {
+            const card = document.getElementById('status-' + name);
+            const dot = card.querySelector('.status-dot');
+            const value = card.querySelector('.status-value');
+            
+            card.className = 'status-card ' + (on ? 'active' : 'inactive');
+            dot.className = 'status-dot ' + (on ? 'on' : 'off');
+            value.innerHTML = `<span class="status-dot ${on ? 'on' : 'off'}"></span>${on ? 'Running' : 'Stopped'}`;
+        }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function startServices() {
+            toast('Starting services...');
+            await api('POST', 'start');
+            toast('Services started');
+            setTimeout(refreshStatus, 3000);
+        }
+
+        async function stopServices() {
+            toast('Stopping services...');
+            await api('POST', 'stop');
+            toast('Services stopped');
+            refreshStatus();
+        }
+
+        async function restartServices() {
+            toast('Restarting services...');
+            await api('POST', 'restart');
+            toast('Services restarted');
+            setTimeout(refreshStatus, 5000);
+        }
+
+        // Auto refresh
+        refreshStatus();
+        refreshLogs();
+        setInterval(refreshStatus, 5000);
+        setInterval(refreshLogs, 3000);
+    </script>
+</body>
+</html>
