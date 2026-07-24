@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   output: 'export',
   trailingSlash: true,
+  basePath: '/platform',
   eslint: {
     ignoreDuringBuilds: true,
   },
